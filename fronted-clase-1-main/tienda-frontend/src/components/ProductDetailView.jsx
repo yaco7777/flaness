@@ -134,6 +134,8 @@ export default function ProductDetailView({
               <img
                 src={urlImagen(producto) || galeria[selectedImage] || imagen}
                 alt={nombre}
+                width="600"
+                height="600"
                 className="w-full h-full object-cover transition-all duration-500 hover:scale-105"
               />
             ) : (
@@ -190,7 +192,7 @@ export default function ProductDetailView({
                       : 'border-transparent opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={imgUrl} alt={`${nombre} vista ${idx+1}`} className="w-full h-full object-cover" />
+                  <img src={imgUrl} alt={`${nombre} vista ${idx+1}`} width="80" height="80" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -513,7 +515,7 @@ export default function ProductDetailView({
                 className="bg-white rounded-2xl overflow-hidden border border-amber-900/10 shadow-xs hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div className="h-40 overflow-hidden relative bg-amber-50">
-                  <img src={rel.imagen} alt={rel.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  <img src={rel.imagen} alt={rel.nombre} width="300" height="160" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   <span className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                     {rel.categoria}
                   </span>

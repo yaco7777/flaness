@@ -120,6 +120,8 @@ export default function CatalogView({
                     <img 
                       src="https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=800&q=80" 
                       alt="Flan Destacado"
+                      width="400"
+                      height="200"
                       className="w-full h-full object-cover"
                     />
                     <span className="absolute top-2.5 left-2.5 bg-amber-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">

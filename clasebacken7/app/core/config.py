@@ -1,17 +1,49 @@
 """
 app/core/config.py
 Configuración centralizada de la aplicación.
+
+Todas las credenciales y URLs (base de datos, CORS, clave JWT) se leen
+EXCLUSIVAMENTE desde variables de entorno o desde el archivo .env local.
+No hay valores sensibles por defecto: si falta DATABASE_URL o SECRET_KEY,
+la aplicación no arranca (fail-fast), evitando conectar a una base equivocada.
 """
 
 import os
+from pathlib import Path
+
+# Raíz del backend (carpeta que contiene app/, alembic/, uploads/ ...)
+BASE_DIR = Path(__file__).resolve().parents[2]
+
+# Carpeta donde se guardan las imágenes subidas por el admin (servida en /static)
+UPLOADS_DIR = BASE_DIR / "uploads"
+
+# Imágenes de demostración versionadas en el repositorio (servidas en /demo)
+DEMO_DIR = BASE_DIR / "app" / "static" / "demo"
+
+
+def normalizar_db_url(url: str) -> str:
+    """Fuerza el driver psycopg2 para que SQLAlchemy 2.x no intente usar psycopg v3.
+
+    Neon y Render entregan URLs con esquema ``postgresql://`` o ``postgres://``;
+    los parámetros (``?sslmode=require&channel_binding=require``) se respetan.
+    """
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+psycopg2://", 1)
+    return url
+
 
 try:
     from pydantic_settings import BaseSettings
+
     class Settings(BaseSettings):
         PROJECT_NAME: str = "Culto al Flan — API"
-        DATABASE_URL: str = "postgresql://postgres:lucben2009@localhost:5432/ecommerce_db"
-        CORS_ORIGINS: str = "http://localhost,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:3000"
-        SECRET_KEY: str = "9f8a4b7c2d1e0f3a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a"
+        # Obligatorias: se leen del entorno / .env (sin valores por defecto)
+        DATABASE_URL: str
+        SECRET_KEY: str
+        # Orígenes permitidos separados por coma (ej: la URL de Vercel)
+        CORS_ORIGINS: str = ""
         ALGORITHM: str = "HS256"
         ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
         REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080
@@ -22,13 +54,17 @@ try:
         def origins(self) -> list[str]:
             return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
-        model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
+        @property
+        def sqlalchemy_url(self) -> str:
+            return normalizar_db_url(self.DATABASE_URL)
+
+        model_config = {"env_file": str(BASE_DIR / ".env"), "env_file_encoding": "utf-8", "extra": "ignore"}
 except ImportError:
     from pydantic import BaseModel
-    
+
     def _load_env():
-        env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-        if os.path.exists(env_path):
+        env_path = BASE_DIR / ".env"
+        if env_path.exists():
             with open(env_path, "r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
@@ -37,13 +73,19 @@ except ImportError:
                         if k.strip() not in os.environ:
                             os.environ[k.strip()] = v.strip()
 
+    def _requerida(nombre: str) -> str:
+        valor = os.getenv(nombre)
+        if not valor:
+            raise RuntimeError(f"Falta la variable de entorno obligatoria {nombre}.")
+        return valor
+
     _load_env()
 
     class Settings(BaseModel):
         PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Culto al Flan — API")
-        DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:lucben2009@localhost:5432/ecommerce_db")
-        CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:3000")
-        SECRET_KEY: str = os.getenv("SECRET_KEY", "9f8a4b7c2d1e0f3a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a")
+        DATABASE_URL: str = _requerida("DATABASE_URL")
+        SECRET_KEY: str = _requerida("SECRET_KEY")
+        CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "")
         ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
         ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
         REFRESH_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_MINUTES", "10080"))
@@ -53,5 +95,9 @@ except ImportError:
         @property
         def origins(self) -> list[str]:
             return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+        @property
+        def sqlalchemy_url(self) -> str:
+            return normalizar_db_url(self.DATABASE_URL)
 
 settings = Settings()

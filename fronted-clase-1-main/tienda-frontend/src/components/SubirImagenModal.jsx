@@ -217,6 +217,8 @@ export default function SubirImagenModal({
                   <img
                     src={preview}
                     alt="Vista previa"
+                    width="112"
+                    height="112"
                     className="w-full h-full object-cover"
                   />
                 </div>

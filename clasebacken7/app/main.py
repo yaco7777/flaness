@@ -7,17 +7,16 @@ Ejecutar con:
     uvicorn app.main:app --reload
 """
 
-import os
-from pathlib import Path
 from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.database import Base, engine, get_db
 from app import models  # noqa: F401 — necesario para que Base registre los modelos
-from app.core.config import settings
+from app.core.config import settings, UPLOADS_DIR, DEMO_DIR
 from app.routers import productos
 from app.routers import auth
 from app.routers import pedidos
@@ -55,6 +54,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Compresión GZip para respuestas JSON/HTML de más de 1 KB (el catálogo pesa
+# bastante menos comprimido; las imágenes JPG no se benefician pero tampoco se
+# rompen porque Starlette solo comprime si el cliente envía Accept-Encoding).
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 
 # ---------------------------------------------------------------------------
 # Routers
@@ -65,18 +69,33 @@ app.include_router(productos.router)
 app.include_router(pedidos.router)
 app.include_router(usuarios.router)
 
-# Montar directorio estático para servir imágenes según el contrato DSI2 (/static/productos/...)
-static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
-os.makedirs(os.path.join(static_dir, "productos"), exist_ok=True)
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# Crear carpeta de uploads para imágenes subidas en producción
-Path("uploads/productos").mkdir(parents=True, exist_ok=True)
+# ---------------------------------------------------------------------------
+# Archivos estáticos con caché de 30 días
+# ---------------------------------------------------------------------------
 
-# Montar /demo → app/static/demo (imágenes de demo que van en el repositorio)
-_demo_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "demo")
-os.makedirs(_demo_dir, exist_ok=True)
-app.mount("/demo", StaticFiles(directory=_demo_dir), name="demo")
+class StaticConCache(StaticFiles):
+    """StaticFiles que agrega Cache-Control de 30 días a las respuestas 200.
+
+    Los nombres de archivo subidos llevan un sufijo aleatorio (uuid), por lo
+    que una imagen nueva siempre tiene una URL nueva y se puede marcar como
+    "immutable" sin riesgo de servir una versión vieja.
+    """
+
+    async def get_response(self, path, scope):
+        respuesta = await super().get_response(path, scope)
+        if respuesta.status_code == 200:
+            respuesta.headers["Cache-Control"] = "public, max-age=2592000, immutable"
+        return respuesta
+
+
+# /static → uploads/  (imágenes subidas por el admin: /static/productos/...)
+(UPLOADS_DIR / "productos").mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticConCache(directory=UPLOADS_DIR), name="static")
+
+# /demo → app/static/demo  (imágenes de demo que van en el repositorio)
+DEMO_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/demo", StaticConCache(directory=DEMO_DIR), name="demo")
 
 
 # ---------------------------------------------------------------------------

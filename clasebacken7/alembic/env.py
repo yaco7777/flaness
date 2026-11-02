@@ -15,15 +15,14 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # --- Leer DATABASE_URL desde settings (variables de entorno), no desde alembic.ini ---
+# configparser interpreta "%" como interpolación: las contraseñas de Neon pueden
+# traer caracteres url-encoded (%40, %23...), por eso se escapan como "%%".
 from app.core.config import settings
 
-_url = settings.DATABASE_URL
-if _url.startswith("postgresql://"):
-    _url = _url.replace("postgresql://", "postgresql+psycopg2://", 1)
-elif _url.startswith("postgres://"):
-    _url = _url.replace("postgres://", "postgresql+psycopg2://", 1)
-
-config.set_main_option("sqlalchemy.url", _url.replace("%", "%%"))
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.sqlalchemy_url.replace("%", "%%"),
+)
 
 
 # Apuntar al metadata de los modelos para soporte de autogenerate

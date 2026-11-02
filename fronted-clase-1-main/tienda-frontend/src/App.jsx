@@ -11,6 +11,7 @@ import RutaProtegida from './components/RutaProtegida';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
 import SubirImagenModal from './components/SubirImagenModal';
+import ActualizacionDisponible from './components/ActualizacionDisponible';
 import { FLANES_DATA } from './data/flanes';
 import { getProductos, getUsuarioActual } from './services/api';
 import { CarritoProvider, useCarrito } from './context/CarritoContext';
@@ -324,6 +325,9 @@ function AppContent() {
 
       {/* 4. Toast Flotante de Notificaciones */}
       <Toast toast={toast} onClose={() => setToast(null)} />
+
+      {/* 5. Aviso PWA de Actualización Disponible */}
+      <ActualizacionDisponible />
     </div>
   );
 }

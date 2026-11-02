@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { crearPedido } from '../services/api';
+import { useConectado } from '../hooks/useConectado';
 
 export default function CartView({
   cartItems = [],
@@ -13,6 +14,7 @@ export default function CartView({
   user = null,
   onAddSampleItem = null,
 }) {
+  const conectado = useConectado();
   const [shippingMethod, setShippingMethod] = useState('delivery'); // 'delivery' | 'pickup'
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -227,6 +229,8 @@ export default function CartView({
                       <img 
                         src={producto.imagen || "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=400&q=80"} 
                         alt={producto.nombre}
+                        width="80"
+                        height="80"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       />
                     </div>
@@ -597,18 +601,27 @@ export default function CartView({
               </div>
             )}
 
+            {/* Aviso sin conexión (PWA Offline) */}
+            {!conectado && (
+              <p role="status" className="p-3 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-semibold text-center animate-fadeIn">
+                Podés mirar el catálogo, pero para comprar necesitás internet.
+              </p>
+            )}
+
             {/* Botón de Confirmación Principal */}
             <button
               id="btn-confirmar-pedido"
               onClick={confirmar}
-              disabled={enviando || cartItems.length === 0}
+              disabled={!conectado || enviando || cartItems.length === 0}
               className={`w-full py-4 px-6 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-lg ${
-                enviando || cartItems.length === 0
+                !conectado || enviando || cartItems.length === 0
                   ? 'bg-stone-300 text-stone-500 cursor-not-allowed shadow-none'
                   : 'bg-gradient-to-r from-amber-900 via-amber-950 to-amber-900 hover:from-amber-950 hover:to-amber-900 text-white hover:shadow-xl active:scale-98 cursor-pointer ring-2 ring-amber-600/30'
               }`}
             >
-              {enviando ? (
+              {!conectado ? (
+                <span>Sin conexión a internet</span>
+              ) : enviando ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   <span>Procesando simulación de compra...</span>

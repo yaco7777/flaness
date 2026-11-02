@@ -17,16 +17,20 @@ from app.core.config import settings
 # Engine — objeto central que gestiona la conexión con la base de datos.
 # ---------------------------------------------------------------------------
 
-# Forzar el driver psycopg2 explícitamente para evitar que SQLAlchemy 2.x
-# intente usar psycopg v3 (que no está instalado).
-_db_url = settings.DATABASE_URL
-if _db_url.startswith("postgresql://"):
-    _db_url = _db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
-elif _db_url.startswith("postgres://"):
-    # Render a veces devuelve "postgres://" (sin ql)
-    _db_url = _db_url.replace("postgres://", "postgresql+psycopg2://", 1)
-
-engine = create_engine(_db_url)
+# settings.sqlalchemy_url fuerza el driver psycopg2 explícitamente para evitar
+# que SQLAlchemy 2.x intente usar psycopg v3 (que no está instalado), y
+# convierte "postgres://" (Render) en "postgresql+psycopg2://".
+#
+# Pool pensado para Neon (serverless): Neon suspende el cómputo tras unos
+# minutos de inactividad y corta las conexiones abiertas.
+#   pool_pre_ping=True → antes de usar una conexión del pool hace un "SELECT 1"
+#                         y la descarta si el servidor la cerró.
+#   pool_recycle=300   → recicla conexiones con más de 5 minutos de vida.
+engine = create_engine(
+    settings.sqlalchemy_url,
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 
 
 # ---------------------------------------------------------------------------

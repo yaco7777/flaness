@@ -1,7 +1,12 @@
+import os
 import requests
 import sys
 
-BASE_URL = "http://127.0.0.1:8000"
+# URL del backend a probar, desde el entorno. Ej (PowerShell):
+#   $env:API_URL = "https://<tu-backend>.onrender.com"; python test_endpoints.py
+BASE_URL = os.environ.get("API_URL", "").rstrip("/")
+if not BASE_URL:
+    sys.exit("Definí la variable de entorno API_URL con la URL del backend.")
 
 def test_api():
     print("--- 1. Probando exportar sin autenticación (debe dar 401) ---")

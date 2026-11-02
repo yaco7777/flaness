@@ -19,3 +19,9 @@ env/
 
 # Variables de entorno
 .env
+
+# Imágenes subidas en runtime (se sirven en /static, no se versionan)
+uploads/
+
+# Volcados de base de datos (pueden contener datos personales — Ley 25.326)
+*.sql

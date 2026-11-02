@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status, File, Uplo
 from sqlalchemy.orm import Session
 
 from app import models
+from app.core.config import UPLOADS_DIR
 from app.dependencies import get_db, require_admin
 from app.schemas.producto import ProductoCreate, ProductoOut
 from app.services.productos import crear_producto, listar_productos
@@ -16,7 +17,8 @@ from app.services.productos import crear_producto, listar_productos
 router = APIRouter(prefix="/productos", tags=["Productos"])
 
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
-STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "static", "productos")
+# Las imágenes subidas se guardan en uploads/productos y se sirven en /static/productos
+STATIC_DIR = str(UPLOADS_DIR / "productos")
 
 
 @router.post(

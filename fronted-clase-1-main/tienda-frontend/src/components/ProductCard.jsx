@@ -54,6 +54,8 @@ export default function ProductCard({
             src={imagenSrc}
             alt={nombre}
             loading="lazy"
+            width="400"
+            height="400"
             className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
           />
         ) : (

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t">
+  <title id="t">Culto al Flan</title>
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4d2511"/>
+      <stop offset="1" stop-color="#2b1409"/>
+    </linearGradient>
+    <linearGradient id="cuerpo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="caramelo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b45309"/>
+      <stop offset="1" stop-color="#78350f"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#fondo)"/>
+  <!-- plato -->
+  <ellipse cx="256" cy="372" rx="168" ry="30" fill="#faf6f0" opacity="0.92"/>
+  <!-- cuerpo del flan -->
+  <path d="M152 360 L184 200 Q256 182 328 200 L360 360 Q256 384 152 360 Z" fill="url(#cuerpo)"/>
+  <!-- caramelo -->
+  <path d="M184 200 Q256 168 328 200 L334 232 Q318 248 306 232 Q296 262 280 240 Q262 268 246 240 Q228 262 214 236 Q200 252 190 232 Z" fill="url(#caramelo)"/>
+  <ellipse cx="256" cy="196" rx="72" ry="16" fill="#92400e"/>
+  <!-- brillo -->
+  <path d="M206 258 Q200 300 196 340" stroke="#fffbeb" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.7"/>
+</svg>
